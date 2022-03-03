@@ -183,9 +183,9 @@ for i in range(np.size(w[0])):
 
 # ============make a multi-wavelength image for contours==================
 truecolorimage=np.zeros((s[0],s[1],3))
-truecolorimage[:,:,2]=main_utils.bytscl(np.log10(map_il[0].data),top=3.9,bottom=1.2)
-truecolorimage[:,:,1]=main_utils.bytscl(np.log10(map_il[1].data),top=3.0,bottom=1.4)
-truecolorimage[:,:,0]=main_utils.bytscl(np.log10(map_il[2].data),top=2.7,bottom=0.8)
+truecolorimage[:,:,2]= main_utils.bytscl(np.log10(map_il[0].data), top=3.9, bottom=1.2)
+truecolorimage[:,:,1]= main_utils.bytscl(np.log10(map_il[1].data), top=3.0, bottom=1.4)
+truecolorimage[:,:,0]= main_utils.bytscl(np.log10(map_il[2].data), top=2.7, bottom=0.8)
 #	注意这里取了对数
 
 t0=truecolorimage[:,:,0]

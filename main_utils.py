@@ -1,14 +1,39 @@
 import numpy as np
 
 
-def bytscl(data, top=255, bottom=0, nan_val=0):
-    """
-    Scale data to range [bottom, top]
-    """
-    if nan_val is not None:
-        data = data.copy()
-        data[np.isnan(data)] = nan_val
-    data = (data - data.min()) * (top - bottom) / (data.max() - data.min()) + bottom
+def bytscl(data, top=255, bottom=0, nan_val=0, Max=None, Min=None):
+    '''
+    Purpose:
+        Scale the data to the range [bottom, top]
+        If the data is a masked array, the mask will be retained.
+        If the data is a masked array, the mask will be retained.
+        If the data is a masked array, the mask will be retained.
+
+    Parameters:
+        [data] data to be scaled
+        [top] the top value of the scaled data
+        [bottom] the bottom value of the scaled data
+        [nan_val] the value to be assigned to NaN
+        [max] the maximum value of the data
+        [min] the minimum value of the data
+
+    Example:
+        Scale the data to the range [0, 255]
+        >> bytscl(data, top=255, bottom=0)
+
+    Written by Gao Yuhang, Mar. 2, 2022
+    '''
+    if Max is None: Max = np.nanmax(data)
+    if Min is None: Min = np.nanmin(data)
+    if np.isnan(Max): Max = top
+    if np.isnan(Min): Min = bottom
+    if Max == Min:
+        data = np.ones(data.shape) * top
+    else:
+        data = (top - bottom) * (data - Min) / (Max - Min) + bottom
+    data[data > top] = top
+    data[data < bottom] = bottom
+    data[np.isnan(data)] = nan_val
     return data
 
 def paf_gaussian(npixel, fwhm):
