@@ -289,3 +289,7 @@ mas[t2/t1 > ((dat0.mean()*1.5102)/(dat1.mean()))] = 1
 # ====create structure containing simple CH location information======
 
 # ====stores all CH properties in a text file=====
+
+if __name__ == '__main__':
+    plt.imshow(mas*msk*mak)
+    plt.show()
