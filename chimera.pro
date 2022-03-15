@@ -257,7 +257,7 @@ for i=0L,(n_elements(info)-1) do begin
 	cent=[mean(xy[0,offs+chpts]),mean(xy[1,offs+chpts])]			
 
 ;===remove quiet sun regions encompassed by coronal holes======
-		if def[max(xy[0,offs+chpts])+1.,xy[1,offs+min(where((xy[0,offs+chpts]) eq max(xy[0,offs+chpts])))]] gt 0 and iarr[max(xy[0,offs+chpts])+1.,xy[1,offs+min(where((xy[0,offs+chpts]) eq max(xy[0,offs+chpts])))]] gt 0 then begin
+		if def[max(xy[0,offs+chpts])+1., xy[1,offs+min( where( (xy[0,offs+chpts] ) eq max(xy[0,offs+chpts])) )]] gt 0 and iarr[max(xy[0,offs+chpts])+1.,xy[1,offs+min(where((xy[0,offs+chpts]) eq max(xy[0,offs+chpts])))]] gt 0 then begin
 			subscripts=POLYFILLV(xy(0,offs + chpts ),xy(1,offs + chpts ),s[1],s[2])
 			iarr[subscripts]=0
 		endif else begin
@@ -283,11 +283,11 @@ for i=0L,(n_elements(info)-1) do begin
 				pos[*,1]=subscripts/s[1]       
 				pos[*,0]=(pos[*,0]-(s[1]/2))*convermul+(s[2]/2) 
 				pos[*,1]=(pos[*,1]-(s[1]/2))*convermul+(s[2]/2) 
-				npix=histogram(hd[pos[*,0],pos[*,1]],binsize=1)
+				npix=histogram(hd[pos[*,0],pos[*,1]],binsize=1) # 磁图的柱状图
 				magpol=indgen(max(hd[pos[*,0],pos[*,1]])-min(hd[pos[*,0],pos[*,1]]))+min(hd[pos[*,0],pos[*,1]])
 
 				wh=where(npix eq 0,count)
-				if count gt 0 then npix[wh]=1
+				if count gt 0 then npix[wh]=1   #这是在干嘛？？？
 				wh1=where(magpol gt 0,count)
 				if count lt 1 then continue
 				wh2=where(magpol lt 0,count)
@@ -304,7 +304,7 @@ for i=0L,(n_elements(info)-1) do begin
 				arccent0=coord[0,xpos,ypos]
 				arccent1=coord[1,xpos,ypos]
 
-;======calculate average angle coronal hole is subjected histogramto======
+;======calculate average angle coronal hole is subjected histogramto======这个CH的平均角度（方便从投影面积换算到实际的面积）
 				dist=sqrt((arccent0)^(2)+(arccent1)^(2))
 				ang=2*asin(SQRT(dist/(2*rs)))
 

@@ -197,22 +197,61 @@ mak[t0 + t1 < 0.7*(dat1.mean() + dat2.mean())] = 1
 mas[t2/t1 > ((dat0.mean()*1.5102)/(dat1.mean()))] = 1
 
 # ====plot tricolour image with lon/lat conotours=======
+ax = np.arange(s[0])
+ay = np.arange(s[1])
 
 # ======removes off detector mis-identifications and seperates on-disk and off-lib CHs==========
+
+circ[:] = 1
+rm = (s[0]/2.0)-100
+r = (rs/dattoarc).value/0.6
+xgrid = np.outer(np.arange(s[0]),np.ones(s[1],dtype='float'))
+ygrid = np.outer(np.ones(s[0],dtype='float'),np.arange(s[1]))
+center = [int(s[0]/2.), int(s[1]/2.)]
+w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= rm ** 2)
+circ[w] = 0
+w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= (r - 10) ** 2)
+circ[w] = 0
+Def = mas * msk * mak * circ
 
 # ====open file for property storage=====
 
 
 # =====contours the identified datapoints=======
-
+# fig = plt.figure(figsize=(12, 12))
+# CS = plt.contour(ax, ay, Def, [0.99999,1], alpha = 0.9)
+# seg = CS.allsegs[0]
+Def_grey=np.uint8(Def*255)
+contours,hierarchy = cv2.findContours(Def_grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+area_thres = 1000 / (dattoarc**2) # 选出比这个大的面积，像素^2
+contours_large = [] # 比较大的contours
+Cs = [] # 每个较大contour的中心坐标
 # =====cycles through contours=========
-
+for contour in contours:
 # =====only takes values of minimum surface length and calculates area======
-
-
+    if cv2.contourArea(contour) >= area_thres:
+        contours_large.append(contour)
 # =====finds centroid=======
+        M = cv2.moments(contour)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        Cs.append((cX,cY))
+# cv2.drawContours(Def_grey,contours_large,-1,(125,0,0),5)
+# for C in Cs:
+#     cv2.circle(Def_grey, C, 7, (0, 0, 255), -1)
+# cv2.imshow('img',Def_grey)
+# print('test')
+
+
+
+
+
+
+
+
 
 # ===remove quiet sun regions encompassed by coronal holes======
+# ?????????????????????????
 
 # ====create a simple centre point======
 
@@ -221,6 +260,13 @@ mas[t2/t1 > ((dat0.mean()*1.5102)/(dat1.mean()))] = 1
 # =====classifies on disk coronal holes=======
 
 # ====create an array for magnetic polarity
+
+# npix 磁图的柱状图
+# magpol 磁图的数值范围
+# wh1 磁图大于0的地方
+# wh2 磁图小于0的地方
+# garr 高斯分布的磁场阈值
+
 
 # =====magnetic cut offs dependant on area=========
 
