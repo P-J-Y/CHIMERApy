@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 def bytscl(data, top=255, bottom=0, nan_val=0, Max=None, Min=None):
@@ -36,7 +37,7 @@ def bytscl(data, top=255, bottom=0, nan_val=0, Max=None, Min=None):
     data[np.isnan(data)] = nan_val
     return data
 
-def paf_gaussian(npixel, fwhm):
+def psf_gaussian(npixel, fwhm):
     '''
     Based on psf_gaussian in Solar Software
     Purpose:
@@ -71,7 +72,10 @@ def paf_gaussian(npixel, fwhm):
 
     for j in range(npix[1]): psf[:,j] = psfx * psfy[j]
 
-    # plt.imshow(psf)
+    plt.imshow(psf)
 
-    return
+    return psf
+
+# psf = psf_gaussian(4096, [2000, 2000])
+
 
