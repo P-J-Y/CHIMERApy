@@ -9,6 +9,9 @@ import cv2
 import matplotlib.pyplot as plt
 import main_utils
 
+#
+garr = main_utils.psf_gaussian(4096, [2000, 2000])
+
 # ==============Finds all fits files==============
 # data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data"
 data_dir = os.getcwd() + '\\data'
@@ -113,7 +116,7 @@ y = x
 ch = np.zeros(1, dtype='int')
 
 # =======creation of a 2d gaussian for magnetic cut offs===========
-r = (s[0] / 2.0) - 450  # solar radius [pixel], ~975"
+r_inner = (s[0] / 2.0) - 450  # solar radius [pixel], ~975"
 xgrid = np.outer(np.ones(s[1]), np.arange(s[0]))
 ygrid = np.outer(np.arange(s[1]), np.ones(s[0]))
 
@@ -163,10 +166,10 @@ dat1 = data[1, :, :]
 dat2 = data[2, :, :]
 
 # ======Get pixels with useful intensities (>4000) and on disk======
-r = ind[0]['r_sun']  # 是像素   1626.6714716666668
+# r_outer= ind[0]['r_sun']  # 是像素   1626.6714716666668
 w = np.where(
 	np.logical_and(
-		(xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 < r ** 2,
+		(xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 < r_inner ** 2,
 		dat0 < 4000,
         (dat1 < 4000) & (dat2 < 4000)
 	)
@@ -204,13 +207,15 @@ ay = np.arange(s[1])
 
 circ[:] = 1
 rm = (s[0]/2.0)-100
-r = (rs/dattoarc).value/0.6
+r_outer = (rs/dattoarc).value #像素单位
 xgrid = np.outer(np.arange(s[0]),np.ones(s[1],dtype='float'))
 ygrid = np.outer(np.ones(s[0],dtype='float'),np.arange(s[1]))
 center = [int(s[0]/2.), int(s[1]/2.)]
 w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= rm ** 2)
 circ[w] = 0
-w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= (r - 10) ** 2)
+# ?????????????????????????????????????????这里是哪个r？？？？？？？？？？？？？？？？？？？？？？
+w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= (r_outer - 10) ** 2)
+# ？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
 circ[w] = 0
 Def = mas * msk * mak * circ
 
@@ -228,19 +233,66 @@ contours_large = [] # 比较大的contours
 Cs = [] # 每个较大contour的中心坐标
 # =====cycles through contours=========
 for contour in contours:
-# =====only takes values of minimum surface length and calculates area======
-    if cv2.contourArea(contour) >= area_thres:
-        contours_large.append(contour)
-# =====finds centroid=======
+    # =====only takes values of minimum surface length and calculates area======
+    # =====finds centroid=======
+    area = cv2.contourArea(contour) #单位是像素2
+    if  area >= area_thres:
         M = cv2.moments(contour)
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
-        Cs.append((cX,cY))
-# cv2.drawContours(Def_grey,contours_large,-1,(125,0,0),5)
+        sintheta = np.sqrt((cX - center[0]) ** 2 + (cY - center[1]) ** 2) / r_inner  # 投影角度
+        costheta = np.sqrt(1 - sintheta ** 2)
+        area = area/costheta**2
+
+        # =====classifies on disk coronal holes=======
+        p = np.zeros(s)
+        cv2.drawContours(p,[contour,],-1,255,-1)
+        a = np.where(p==255)[0].reshape(-1,1)
+        b = np.where(p==255)[1].reshape(-1,1)
+        coordinate = np.concatenate([a,b],axis=1).tolist()
+        inside = [tuple(x) for x in coordinate]
+
+        # ====create an array for magnetic polarity
+        binsize = 1.
+
+        hd_contour = [hd[x] for x in inside]
+        binnum = int((np.nanmax(hd_contour)-np.nanmin(hd_contour))//binsize + 1)
+        npix,bins = np.histogram(hd_contour,bins=binnum)
+        npix[npix==0] = 1
+        magpol = bins[:-1]+binsize/2
+        wh1 = magpol > 0
+        if sum(wh1) < 1 : continue
+        wh2 = magpol < 0
+        if sum(wh2) < 1 : continue
+        # =====magnetic cut offs dependant on area=========
+        if abs((sum(npix[wh1]) - sum(npix[wh2])) / np.sqrt(sum(npix))) <= 10 and area < (9000 / (dattoarc**2)) :
+            print(abs(np.nanmean(hd_contour)))
+            print(garr[cX, cY])
+            print(area*dattoarc**2)
+            continue
+        if abs(np.nanmean(hd_contour)) < garr[cX, cY] and area < (40000 / (dattoarc**2)) :
+            print(abs(np.nanmean(hd_contour)))
+            print(garr[cX, cY])
+            print(area*dattoarc**2)
+            continue
+
+
+        # ====create an accurate center point=======
+        Cs.append((cX, cY))
+        contours_large.append(contour)
+# cv2.namedWindow('img',0)
+# cv2.drawContours(Def_grey,contours_large,-1,(125,255,255),5)
 # for C in Cs:
-#     cv2.circle(Def_grey, C, 7, (0, 0, 255), -1)
+#     cv2.circle(Def_grey, C, 20, 125, -1)
 # cv2.imshow('img',Def_grey)
 # print('test')
+# mask_rgb = cv2.merge([msk,mak,mas])
+tci = np.uint8(truecolorimage)
+cv2.namedWindow('mask_rgb',0)#b,g,r
+cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
+cv2.imshow('mask_rgb',tci)
+
+
 
 
 

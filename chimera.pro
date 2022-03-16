@@ -284,19 +284,20 @@ for i=0L,(n_elements(info)-1) do begin
 				pos[*,0]=(pos[*,0]-(s[1]/2))*convermul+(s[2]/2) 
 				pos[*,1]=(pos[*,1]-(s[1]/2))*convermul+(s[2]/2) 
 				npix=histogram(hd[pos[*,0],pos[*,1]],binsize=1) # 磁图的柱状图
-				magpol=indgen(max(hd[pos[*,0],pos[*,1]])-min(hd[pos[*,0],pos[*,1]]))+min(hd[pos[*,0],pos[*,1]])
+				magpol=indgen(max(hd[pos[*,0],pos[*,1]])-min(hd[pos[*,0],pos[*,1]]))+min(hd[pos[*,0],pos[*,1]]) # 就是bins
 
 				wh=where(npix eq 0,count)
-				if count gt 0 then npix[wh]=1   #这是在干嘛？？？
+				if count gt 0 then npix[wh]=1   #把柱状图里面没有计数的bin，计数改为1
 				wh1=where(magpol gt 0,count)
-				if count lt 1 then continue
+				if count lt 1 then continue #这是数一下多少个bin是大于0
 				wh2=where(magpol lt 0,count)
-				if count lt 1 then continue
+				if count lt 1 then continue #这是数一下多少个bin是小于0
 
 ;=====magnetic cut offs dependant on area=========
+# 判断一下磁场是不是单一极性的
 				if abs((total(npix[wh1])-total(npix[wh2]))/sqrt(total(npix))) le 10 and arcar lt 9000 then continue 
 				if abs(mean(hd[pos[*,0],pos[*,1]])) lt garr[cent[0],cent[1]] and arcar lt 40000 then continue
-				iarr[subscripts]=ident
+				iarr[subscripts]=ident ############ 这些还没管
 
 ;====create an accurate center point=======
 				ypos=total((subscripts/s[1])*abs(lat(subscripts)))/total(abs(lat(subscripts)))
@@ -328,6 +329,7 @@ for i=0L,(n_elements(info)-1) do begin
 				centlon=lon[cent[0],cent[1]]
 
 ;====caluclate the mean magnetic field=====
+# 计算一下磁场、正、负磁场的均值
 				mB=mean(hd[pos[*,0],pos[*,1]])
 				mBpos=total(npix[wh1]*magpol[wh1])/total(npix[wh1])
 				mBneg=total(npix[wh2]*magpol[wh2])/total(npix[wh2])
