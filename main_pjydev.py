@@ -266,14 +266,14 @@ for contour in contours:
         if sum(wh2) < 1 : continue
         # =====magnetic cut offs dependant on area=========
         if abs((sum(npix[wh1]) - sum(npix[wh2])) / np.sqrt(sum(npix))) <= 10 and area < (9000 / (dattoarc**2)) :
-            print(abs(np.nanmean(hd_contour)))
-            print(garr[cX, cY])
-            print(area*dattoarc**2)
+            # print(abs(np.nanmean(hd_contour)))
+            # print(garr[cX, cY])
+            # print(area*dattoarc**2)
             continue
         if abs(np.nanmean(hd_contour)) < garr[cX, cY] and area < (40000 / (dattoarc**2)) :
-            print(abs(np.nanmean(hd_contour)))
-            print(garr[cX, cY])
-            print(area*dattoarc**2)
+            # print(abs(np.nanmean(hd_contour)))
+            # print(garr[cX, cY])
+            # print(area*dattoarc**2)
             continue
 
 
