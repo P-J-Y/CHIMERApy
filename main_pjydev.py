@@ -25,10 +25,10 @@ f211 = []
 fhmi = []
 
 for i in range(0, np.size(f)):
-    if "171" in f[i]: f171 = data_dir + '//' + f[i]
-    if "193" in f[i]: f193 = data_dir + '//' + f[i]
-    if "211" in f[i]: f211 = data_dir + '//' + f[i]
-    if "mag" in f[i]: fhmi = data_dir + '//' + f[i]
+    if "_171a_" in f[i]: f171 = data_dir + '//' + f[i]
+    if "_193a_" in f[i]: f193 = data_dir + '//' + f[i]
+    if "_211a_" in f[i]: f211 = data_dir + '//' + f[i]
+    if "magnetogram" in f[i]: fhmi = data_dir + '//' + f[i]
 
 if f171 == [] or f193 == [] or f211 == [] or fhmi == []:
     print("Not all files are present.")
@@ -257,7 +257,7 @@ for contour in contours:
 
         hd_contour = [hd[x] for x in inside]
         binnum = int((np.nanmax(hd_contour)-np.nanmin(hd_contour))//binsize + 1)
-        npix,bins = np.histogram(hd_contour,bins=binnum)
+        npix,bins = np.histogram(hd_contour,bins=binnum,range=(np.nanmin(hd_contour),np.nanmax(hd_contour)))
         npix[npix==0] = 1
         magpol = bins[:-1]+binsize/2
         wh1 = magpol > 0
