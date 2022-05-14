@@ -14,8 +14,8 @@ import json
 garr = main_utils.psf_gaussian(4096, [2000, 2000])
 
 # ==============Finds all fits files==============
-data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
-# data_dir = os.getcwd() + '\\data'
+# data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
+data_dir = os.getcwd() + '\\data'
 # os.chdir(data_dir)  # data_dir为数据所在的目录
 
 # 提取文件名
@@ -316,7 +316,8 @@ for contour in contours_large:
     CHs.append(CH_info)
 
 print(CHs)
-with open('/Users/gyh/Desktop/research/CH_detect/py/CH_info.json','w') as f:
+jsonfile = os.getcwd() + '\\output\\' + 'CH_info.json'
+with open(jsonfile,'w') as f:
     for CH_info in CHs:
         f.write(CH_info)
         f.write('\n')
