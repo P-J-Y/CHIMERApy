@@ -8,10 +8,14 @@ from aiapy.calibrate import normalize_exposure, register, update_pointing
 import cv2
 import matplotlib.pyplot as plt
 import main_utils
+import json
+
+#
+garr = main_utils.psf_gaussian(4096, [2000, 2000])
 
 # ==============Finds all fits files==============
-# data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data"
-data_dir = os.getcwd() + '\\data'
+data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
+# data_dir = os.getcwd() + '\\data'
 # os.chdir(data_dir)  # data_dir为数据所在的目录
 
 # 提取文件名
@@ -25,7 +29,7 @@ for i in range(0, np.size(f)):
     if "171" in f[i]: f171 = data_dir + '//' + f[i]
     if "193" in f[i]: f193 = data_dir + '//' + f[i]
     if "211" in f[i]: f211 = data_dir + '//' + f[i]
-    if "mag" in f[i]: fhmi = data_dir + '//' + f[i]
+    if "magneto" in f[i]: fhmi = data_dir + '//' + f[i]
 
 if f171 == [] or f193 == [] or f211 == [] or fhmi == []:
     print("Not all files are present.")
@@ -35,15 +39,6 @@ if f171 == [] or f193 == [] or f211 == [] or fhmi == []:
 # fil.append(f193)
 # fil.append(f211)
 
-# ============set plots for z buffer=======================
-# 主要是绘制三个波段叠加的极紫外的图像，这里主要是构建一个绘图的环境
-# 看起来不能直接转
-# 看看sunpy能不能做到
-'''
-# 主要是绘制三个波段叠加的极紫外的图像，这里主要是构建一个绘图的环境
-# sunpy似乎可以做到
-
-'''
 
 # =====Reads in data=====
 # read_sdo,fhmi,hin,hd, /use_shared_lib
@@ -113,7 +108,7 @@ y = x
 ch = np.zeros(1, dtype='int')
 
 # =======creation of a 2d gaussian for magnetic cut offs===========
-r = (s[0] / 2.0) - 450  # solar radius [pixel], ~975"
+r_inner = (s[0] / 2.0) - 450  # solar radius [pixel], ~975"
 xgrid = np.outer(np.ones(s[1]), np.arange(s[0]))
 ygrid = np.outer(np.arange(s[1]), np.ones(s[0]))
 
@@ -163,15 +158,14 @@ dat1 = data[1, :, :]
 dat2 = data[2, :, :]
 
 # ======Get pixels with useful intensities (>4000) and on disk======
-r = ind[0]['r_sun']  # 是像素   1626.6714716666668
+# r_outer= ind[0]['r_sun']  # 是像素   1626.6714716666668
 w = np.where(
 	np.logical_and(
-		(xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 < r ** 2,
+		(xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 < r_inner ** 2,
 		dat0 < 4000,
         (dat1 < 4000) & (dat2 < 4000)
 	)
 )
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # =====create intensity ratio arrays=============
 # 这一节是把日盘（4000应该是饱和或者耀斑得意思？？？）筛出来
@@ -183,9 +177,9 @@ for i in range(np.size(w[0])):
 
 # ============make a multi-wavelength image for contours==================
 truecolorimage=np.zeros((s[0],s[1],3))
-truecolorimage[:,:,2]= main_utils.bytscl(np.log10(map_il[0].data), top=3.9, bottom=1.2)
-truecolorimage[:,:,1]= main_utils.bytscl(np.log10(map_il[1].data), top=3.0, bottom=1.4)
-truecolorimage[:,:,0]= main_utils.bytscl(np.log10(map_il[2].data), top=2.7, bottom=0.8)
+truecolorimage[:,:,2]= main_utils.bytscl(np.log10(map_il[0].data), Max=3.9, Min=1.2)
+truecolorimage[:,:,1]= main_utils.bytscl(np.log10(map_il[1].data), Max=3.0, Min=1.4)
+truecolorimage[:,:,0]= main_utils.bytscl(np.log10(map_il[2].data), Max=2.7, Min=0.8)
 #	注意这里取了对数
 
 t0=truecolorimage[:,:,0]
@@ -198,95 +192,144 @@ mak[t0 + t1 < 0.7*(dat1.mean() + dat2.mean())] = 1
 mas[t2/t1 > ((dat0.mean()*1.5102)/(dat1.mean()))] = 1
 
 # ====plot tricolour image with lon/lat conotours=======
+ax = np.arange(s[0])
+ay = np.arange(s[1])
 
 # ======removes off detector mis-identifications and seperates on-disk and off-lib CHs==========
 
-# ====open file for property storage=====
+circ[:] = 1
+rm = (s[0]/2.0)-100
+r_outer = (rs/dattoarc).value #像素单位
+xgrid = np.outer(np.arange(s[0]),np.ones(s[1],dtype='float'))
+ygrid = np.outer(np.ones(s[0],dtype='float'),np.arange(s[1]))
+center = [int(s[0]/2.), int(s[1]/2.)]
+w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= rm ** 2)
+circ[w] = 0
+w = np.where((xgrid - center[0]) ** 2 + (ygrid - center[1]) ** 2 >= (r_outer - 10) ** 2)
+circ[w] = 0
+Def = mas * msk * mak * circ
 
 
 # =====contours the identified datapoints=======
+# fig = plt.figure(figsize=(12, 12))
+# CS = plt.contour(ax, ay, Def, [0.99999,1], alpha = 0.9)
+# seg = CS.allsegs[0]
+Def_grey=np.uint8(Def*255)
+contours,hierarchy = cv2.findContours(Def_grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+area_thres = 1000 / (dattoarc**2) # 选出比这个大的面积，像素^2
+contours_large = [] # 比较大的contours
+Cs = [] # 每个较大contour的中心坐标
 
 # =====cycles through contours=========
+for contour in contours:
+    # =====only takes values of minimum surface length and calculates area======
+    # =====finds centroid=======
+    area = cv2.contourArea(contour) #单位是像素2
+    if  area >= area_thres:
+        M = cv2.moments(contour)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        sintheta = np.sqrt((cX - center[0]) ** 2 + (cY - center[1]) ** 2) / r_inner  # 投影角度
+        costheta = np.sqrt(1 - sintheta ** 2)
+        area = area/costheta**2
 
-# =====only takes values of minimum surface length and calculates area======
+        # =====classifies on disk coronal holes=======
+        p = np.zeros(s)
+        cv2.drawContours(p,[contour,],-1,255,-1)
+        a = np.where(p==255)[0].reshape(-1,1)
+        b = np.where(p==255)[1].reshape(-1,1)
+        coordinate = np.concatenate([a,b],axis=1).tolist()
+        inside = [tuple(x) for x in coordinate]
 
+        # ====create an array for magnetic polarity
+        binsize = 1.
 
-# =====finds centroid=======
-
-# ===remove quiet sun regions encompassed by coronal holes======
-
-# ====create a simple centre point======
-
-# ====classifies off limb CH regions========
-
-# =====classifies on disk coronal holes=======
-
-# ====create an array for magnetic polarity
-
-# =====magnetic cut offs dependant on area=========
-
-
-# ====create an accurate center point=======
-
-# ======calculate average angle coronal hole is subjected histogramto======
-
-# =====calculate area of CH with minimal projection effects======
-
-# ====find CH extent in lattitude and longitude========
-
-# =====CH centroid in lat/lon=======
-
-# ====caluclate the mean magnetic field=====
-
-# =====finds coordinates of CH boundaries=======
-
-
-# ====insertions of CH properties into property array=====
-
-# =====sets up code for next possible coronal hole=====
-
-# =====sets ident back to max value of iarr======
-
-# =====looks for a previous segmentation array==========
-
-
-# ======finds time difference for tracking======
-
-# =====only track if previous segmentation given=======
-
-# =====calculate centroids of old segmentation=======
-
-# ====rotate old segmented array for comparrison======
-
-# ====arrays for keeping track of new identification numbers======
-
-# ===only run if array supplied=====
-
-# ===cycle through previous segmentation====
-
-# ===empties clone array=====
-
-# ====cycle through current segmentation=====
-
-# ====finds how many pixels old and new chs share======
-
-# =====defines which new ch is most likely a previously segmented ch======
-
-# =====this ch cannot be reclassified========
-
-# ====contour and label ch with tracked number========
-
-# ====cycle through any CHs which was not relabeled in tracking========
+        hd_contour = [hd[x] for x in inside]
+        binnum = int((np.nanmax(hd_contour)-np.nanmin(hd_contour))//binsize + 1)
+        npix,bins = np.histogram(hd_contour,bins=binnum,range=(np.nanmin(hd_contour),np.nanmax(hd_contour)))
+        npix[npix==0] = 1
+        magpol = bins[:-1]+binsize/2
+        wh1 = magpol > 0
+        # print('wh1:',sum(wh1))
+        if sum(wh1) < 1 : continue
+        wh2 = magpol < 0
+        # print('wh2:',sum(wh2))
+        if sum(wh2) < 1 : continue
+        # =====magnetic cut offs dependant on area=========
+        if abs((sum(npix[wh1]) - sum(npix[wh2])) / np.sqrt(sum(npix))) <= 10 and area < (9000 / (dattoarc**2)) :
+            # print(abs(np.nanmean(hd_contour)))
+            # print(garr[cX, cY])
+            # print(area*dattoarc**2)
+            continue
+        if abs(np.nanmean(hd_contour)) < garr[cX, cY] and area < (40000 / (dattoarc**2)) :
+            # print(abs(np.nanmean(hd_contour)))
+            # print(garr[cX, cY])
+            # print(area*dattoarc**2)
+            continue
 
 
-# ====contour and label CH boundary======
+        # ====create an accurate center point=======
+        Cs.append((cX, cY))
+        contours_large.append(contour)
 
 
-# ====display off-limb CH regions=======
-# 可以不需要
 
-# =====create image in output folder=======
 
-# ====create structure containing simple CH location information======
+# cv2.namedWindow('img',0)
+# cv2.drawContours(Def_grey,contours_large,-1,(125,255,255),5)
+# for C in Cs:
+#     cv2.circle(Def_grey, C, 20, 125, -1)
+# cv2.imshow('img',Def_grey)
+# print('test')
+# mask_rgb = cv2.merge([msk,mak,mas])
 
-# ====stores all CH properties in a text file=====
+
+# ====save infomation of CHs with json format=========
+id = 1
+CHs = []
+for contour in contours_large:
+    area = cv2.contourArea(contour)
+    M = cv2.moments(contour)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+    cX2arc = (cX-center[0])*dattoarc
+    cY2arc = (cY-center[1])*dattoarc
+    CH_center = '['+str('%.1f'%cX2arc)+' '+str('%.1f'%cY2arc)+']'
+
+    sintheta = np.sqrt((cX - center[0]) ** 2 + (cY - center[1]) ** 2) / r_inner  # 投影角度
+    costheta = np.sqrt(1 - sintheta ** 2)
+    area = (area/costheta**2)*(dattoarc**2) #unit: arcsec^2
+
+    contour2arc = (contour-center[0])*dattoarc
+    outline = np.array2string(contour2arc)
+    outline = outline.replace('[[','[').replace(']]',']').replace('\n','')
+
+    time_obs = map_il[0].meta['date-obs'][:-3]
+
+    CH_info = json.dumps({'CH_ID': id,
+                    'time': time_obs,
+                    'centroid (arcsec)': CH_center,
+                    'area (arcsec^2)': str('%.4g'%area),
+                    'outlines (arcsec)': outline},
+                     sort_keys=False, indent=4, separators=(',', ': '))
+    id += 1
+    CHs.append(CH_info)
+
+print(CHs)
+with open('/Users/gyh/Desktop/research/CH_detect/py/CH_info.json','w') as f:
+    for CH_info in CHs:
+        f.write(CH_info)
+        f.write('\n')
+
+
+#====plot EUV image with CHs marked=========
+tci = np.uint8(truecolorimage)
+cv2.namedWindow('mask_rgb',0)#b,g,r
+cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
+cv2.imshow('mask_rgb',tci)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+if __name__ == '__main__':
+    plt.imshow(mas*msk*mak)
+    plt.show()
