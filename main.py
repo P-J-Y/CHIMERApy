@@ -290,7 +290,7 @@ for contour in contours:
                               'centroid (arcsec)': CH_center,
                               'area (arcsec^2)': str('%.4g' % area),
                               'outlines (arcsec)': outline,
-                              'mag (Gs)': np.nanmean(hd_contour),},
+                              'average B_los (G)': np.nanmean(hd_contour),},
                             sort_keys=False, indent=4, separators=(',', ': '))
         id += 1
         CHs.append(CH_info)
