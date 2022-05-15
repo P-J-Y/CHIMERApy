@@ -218,9 +218,12 @@ Def_grey=np.uint8(Def*255)
 contours,hierarchy = cv2.findContours(Def_grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 area_thres = 1000 / (dattoarc**2) # 选出比这个大的面积，像素^2
 contours_large = [] # 比较大的contours
-Cs = [] # 每个较大contour的中心坐标
-
+# Cs = [] # 每个较大contour的中心坐标
+# areas = []
+# mags = [] # 平均视向磁场
 # =====cycles through contours=========
+id = 1
+CHs = []
 for contour in contours:
     # =====only takes values of minimum surface length and calculates area======
     # =====finds centroid=======
@@ -231,7 +234,7 @@ for contour in contours:
         cY = int(M["m01"] / M["m00"])
         sintheta = np.sqrt((cX - center[0]) ** 2 + (cY - center[1]) ** 2) / r_inner  # 投影角度
         costheta = np.sqrt(1 - sintheta ** 2)
-        area = area/costheta**2
+        area = (area/costheta**2)
 
         # =====classifies on disk coronal holes=======
         p = np.zeros(s)
@@ -269,8 +272,28 @@ for contour in contours:
 
 
         # ====create an accurate center point=======
-        Cs.append((cX, cY))
+        # ====save infomation of CHs with json format=========
+        # Cs.append((cX, cY))
+        cX2arc = (cX - center[0]) * dattoarc
+        cY2arc = (cY - center[1]) * dattoarc
+        CH_center = '[' + str('%.1f' % cX2arc) + ' ' + str('%.1f' % cY2arc) + ']'
         contours_large.append(contour)
+        area = area * (dattoarc ** 2)  # unit: arcsec^2
+        # areas.append(area)
+        # mags.append(np.nanmean(hd_contour))
+        contour2arc = (contour - center[0]) * dattoarc
+        outline = np.array2string(contour2arc)
+        outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
+        time_obs = map_il[0].meta['date-obs'][:-3]
+        CH_info = json.dumps({'CH_ID': id,
+                              'time': time_obs,
+                              'centroid (arcsec)': CH_center,
+                              'area (arcsec^2)': str('%.4g' % area),
+                              'outlines (arcsec)': outline,
+                              'mag (Gs)': np.nanmean(hd_contour),},
+                            sort_keys=False, indent=4, separators=(',', ': '))
+        id += 1
+        CHs.append(CH_info)
 
 
 
@@ -284,36 +307,6 @@ for contour in contours:
 # mask_rgb = cv2.merge([msk,mak,mas])
 
 
-# ====save infomation of CHs with json format=========
-id = 1
-CHs = []
-for contour in contours_large:
-    area = cv2.contourArea(contour)
-    M = cv2.moments(contour)
-    cX = int(M["m10"] / M["m00"])
-    cY = int(M["m01"] / M["m00"])
-    cX2arc = (cX-center[0])*dattoarc
-    cY2arc = (cY-center[1])*dattoarc
-    CH_center = '['+str('%.1f'%cX2arc)+' '+str('%.1f'%cY2arc)+']'
-
-    sintheta = np.sqrt((cX - center[0]) ** 2 + (cY - center[1]) ** 2) / r_inner  # 投影角度
-    costheta = np.sqrt(1 - sintheta ** 2)
-    area = (area/costheta**2)*(dattoarc**2) #unit: arcsec^2
-
-    contour2arc = (contour-center[0])*dattoarc
-    outline = np.array2string(contour2arc)
-    outline = outline.replace('[[','[').replace(']]',']').replace('\n','')
-
-    time_obs = map_il[0].meta['date-obs'][:-3]
-
-    CH_info = json.dumps({'CH_ID': id,
-                    'time': time_obs,
-                    'centroid (arcsec)': CH_center,
-                    'area (arcsec^2)': str('%.4g'%area),
-                    'outlines (arcsec)': outline},
-                     sort_keys=False, indent=4, separators=(',', ': '))
-    id += 1
-    CHs.append(CH_info)
 
 print(CHs)
 jsonfile = os.getcwd() + '\\output\\' + 'CH_info.json'
