@@ -16,7 +16,7 @@ garr = main_utils.psf_gaussian(4096, [2000, 2000])
 
 # ==============Finds all fits files==============
 # data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
-data_dir = os.getcwd() + '\\data'
+data_dir = os.getcwd() + '\\data\\thedata'
 # os.chdir(data_dir)  # data_dir为数据所在的目录
 
 # 提取文件名
@@ -310,20 +310,20 @@ for contour in contours:
 
 
 # print(CHs)
-# jsonfile = os.getcwd() + '\\output\\' + 'CH_info.json'
-# with open(jsonfile,'w') as f:
-#     for CH_info in CHs:
-#         f.write(CH_info)
-#         f.write('\n')
+jsonfile = os.getcwd() + '\\output\\' + 'CH_info2.json'
+with open(jsonfile,'w') as f:
+    for CH_info in CHs:
+        f.write(CH_info)
+        f.write('\n')
 
 
 #====plot EUV image with CHs marked=========
-# tci = np.uint8(truecolorimage)
-# cv2.namedWindow('mask_rgb',0)#b,g,r
-# cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
-# cv2.imshow('mask_rgb',tci)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+tci = np.uint8(truecolorimage)
+cv2.namedWindow('mask_rgb',0)#b,g,r
+cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
+cv2.imshow('mask_rgb',tci)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 #
 # if __name__ == '__main__':
 #     plt.imshow(mas*msk*mak)
