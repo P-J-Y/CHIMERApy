@@ -219,7 +219,7 @@ Def_grey=np.uint8(Def*255)
 contours,hierarchy = cv2.findContours(Def_grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 area_thres = 1000 / (dattoarc**2) # 选出比这个大的面积，像素^2
 contours_large = [] # 比较大的contours
-# Cs = [] # 每个较大contour的中心坐标
+Cs = [] # 每个较大contour的中心坐标
 # areas = []
 # mags = [] # 平均视向磁场
 # =====cycles through contours=========
@@ -274,7 +274,7 @@ for contour in contours:
 
         # ====create an accurate center point=======
         # ====save infomation of CHs with json format=========
-        # Cs.append((cX, cY))
+        Cs.append((cX, cY))
         cX2arc = (cX - center[0]) * dattoarc
         cY2arc = (cY - center[1]) * dattoarc
         CH_center = '[' + str('%.1f' % cX2arc) + ' ' + str('%.1f' % cY2arc) + ']'
@@ -283,6 +283,7 @@ for contour in contours:
         # areas.append(area)
         # mags.append(np.nanmean(hd_contour))
         contour2arc = (contour - center[0]) * dattoarc
+        np.set_printoptions(threshold=np.inf)
         outline = np.array2string(contour2arc)
         outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
         time_obs = map_il[0].meta['date-obs'][:-3]
@@ -310,7 +311,7 @@ for contour in contours:
 
 
 # print(CHs)
-jsonfile = os.getcwd() + '\\output\\' + 'CH_info2.json'
+jsonfile = os.getcwd() + '\\output\\' + 'CH_info_2013_03_01.json'
 with open(jsonfile,'w') as f:
     for CH_info in CHs:
         f.write(CH_info)
@@ -322,8 +323,17 @@ tci = np.uint8(truecolorimage)
 cv2.namedWindow('mask_rgb',0)#b,g,r
 cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
 cv2.imshow('mask_rgb',tci)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+###################改一下编号######################
+for i in range(len(Cs)):
+    (x,y) = Cs[i]
+    id = i+1
+    cv2.putText(tci,'CH'+str(id),(x,y),cv2.FONT_HERSHEY_SIMPLEX,3,(100,100,255),8)
+time_obs = map_il[0].meta['date-obs'][:-3]
+cv2.putText(tci,str(time_obs)+' CHIMERA',(200,200),cv2.FONT_HERSHEY_SIMPLEX,2,(100,100,255),2)
+cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_01.png',tci)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
 #
 # if __name__ == '__main__':
 #     plt.imshow(mas*msk*mak)
