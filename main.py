@@ -9,6 +9,7 @@ import cv2
 import matplotlib.pyplot as plt
 import main_utils
 import json
+import tracking
 
 #
 garr = main_utils.psf_gaussian(4096, [2000, 2000])
@@ -308,22 +309,24 @@ for contour in contours:
 
 
 
-print(CHs)
-jsonfile = os.getcwd() + '\\output\\' + 'CH_info.json'
-with open(jsonfile,'w') as f:
-    for CH_info in CHs:
-        f.write(CH_info)
-        f.write('\n')
+# print(CHs)
+# jsonfile = os.getcwd() + '\\output\\' + 'CH_info.json'
+# with open(jsonfile,'w') as f:
+#     for CH_info in CHs:
+#         f.write(CH_info)
+#         f.write('\n')
 
 
 #====plot EUV image with CHs marked=========
-tci = np.uint8(truecolorimage)
-cv2.namedWindow('mask_rgb',0)#b,g,r
-cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
-cv2.imshow('mask_rgb',tci)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# tci = np.uint8(truecolorimage)
+# cv2.namedWindow('mask_rgb',0)#b,g,r
+# cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
+# cv2.imshow('mask_rgb',tci)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+# if __name__ == '__main__':
+#     plt.imshow(mas*msk*mak)
+#     plt.show()
 
-if __name__ == '__main__':
-    plt.imshow(mas*msk*mak)
-    plt.show()
+tracking.trackCH(contours_large,contours_large[2],s)
