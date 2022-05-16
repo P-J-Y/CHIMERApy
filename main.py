@@ -329,4 +329,4 @@ for contour in contours:
 #     plt.imshow(mas*msk*mak)
 #     plt.show()
 
-tracking.trackCH(contours_large,contours_large[2],s)
+# tracking.trackCH(contours_large,contours_large[2],s)

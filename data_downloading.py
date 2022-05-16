@@ -11,15 +11,17 @@ import sunpy.map
 from sunpy.net import Fido
 from sunpy.net import attrs as a
 
-res = Fido.search(a.Time('2022-01-01T00:00:00', '2022-01-01T00:01:00'),
+res = Fido.search(a.Time('2013-03-01T00:00:00', '2013-03-01T00:10:00'),
                   a.Instrument.aia,
                   a.Wavelength(171*u.AA)|a.Wavelength(193*u.AA)|a.Wavelength(211*u.AA),
-                  a.Physobs.intensity)
+                  a.Physobs.intensity,
+                  a.Sample(3*u.minute))
 
-download_files = Fido.fetch(res,path="/Users/gyh/Desktop/research/CH_detect/py/data")
+download_files = Fido.fetch(res,path=os.getcwd()+'\\data')
 
-res = Fido.search(a.Time('2022-01-01T00:00:00', '2022-01-01T00:01:00'),
+res = Fido.search(a.Time('2013-03-01T00:00:00', '2013-03-01T00:10:00'),
                   a.Instrument.hmi,
-                  a.Physobs.los_magnetic_field)
-download_files = Fido.fetch(res,path="/Users/gyh/Desktop/research/CH_detect/py/data")
+                  a.Physobs.los_magnetic_field,
+                  a.Sample(3*u.minute))
+download_files = Fido.fetch(res,path=os.getcwd()+'\\data')
 
