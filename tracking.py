@@ -1,6 +1,10 @@
 import numpy as np
 import cv2
 
+## 现在的程序太慢了，可以改成判断两个活动区中心间距是否小于两活动区的尺度（也许最小尺度？）
+# 现在可以实现一个活动区和一群活动区进行匹配，但是还没有主动进行追踪
+
+
 def trackCH(lastContours,contour,s):
     match = False
     p = np.zeros(s)

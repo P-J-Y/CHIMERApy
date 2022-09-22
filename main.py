@@ -311,7 +311,7 @@ for contour in contours:
 
 
 # print(CHs)
-jsonfile = os.getcwd() + '\\output\\' + 'CH_info_2013_03_01.json'
+jsonfile = os.getcwd() + '\\output\\' + 'CH_info_2013_03_27.json'
 with open(jsonfile,'w') as f:
     for CH_info in CHs:
         f.write(CH_info)
@@ -330,7 +330,7 @@ for i in range(len(Cs)):
     cv2.putText(tci,'CH'+str(id),(x,y),cv2.FONT_HERSHEY_SIMPLEX,3,(100,100,255),8)
 time_obs = map_il[0].meta['date-obs'][:-3]
 cv2.putText(tci,str(time_obs)+' CHIMERA',(200,200),cv2.FONT_HERSHEY_SIMPLEX,2,(100,100,255),2)
-cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_01.png',tci)
+cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_27.png',tci)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
@@ -339,4 +339,4 @@ cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_01.png',tci)
 #     plt.imshow(mas*msk*mak)
 #     plt.show()
 
-# tracking.trackCH(contours_large,contours_large[2],s)
+matchi,ismatch = tracking.trackCH(contours_large,contours_large[2],s)
