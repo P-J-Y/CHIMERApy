@@ -18,7 +18,7 @@ garr = main_utils.psf_gaussian(4096, [2000, 2000])
 ###################
 year_str = "2021"
 month_str = "01"
-day_str = "10"
+day_str = "02"
 hour_str = "00"
 min_str = "00"
 
@@ -304,15 +304,18 @@ for contour in contours:
         # mags.append(np.nanmean(hd_contour))
         contour2arc = (contour - center[0]) * dattoarc
         np.set_printoptions(threshold=np.inf)
-        outline = np.array2string(contour2arc)
-        outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
+        contour2arc = contour2arc.swapaxes(1,2)
+        contour2arc = np.squeeze(contour2arc,2)
+        outline = contour2arc.tolist()
+        # outline = np.array2string(contour2arc)
+        # outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
         time_obs = map_il[0].meta['date-obs'][:-3]
-        CH_info = json.dumps({'CH_ID': id,
+        CH_info = json.dumps({'id': id,
                               'time': time_obs,
-                              'centroid (arcsec)': CH_center,
-                              'area (arcsec^2)': str('%.4g' % area),
-                              'outlines (arcsec)': outline,
-                              'average B_los (G)': np.nanmean(hd_contour),},
+                              'centroid(arcsec)': CH_center,
+                              'area(arcsec^2)': str('%.4g' % area),
+                              'outlines(arcsec)': outline,
+                              'average B_los(G)': np.nanmean(hd_contour),},
                             sort_keys=False, indent=4, separators=(',', ': '))
         id += 1
         CHs.append(CH_info)
