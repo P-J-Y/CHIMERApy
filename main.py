@@ -15,31 +15,49 @@ import tracking
 garr = main_utils.psf_gaussian(4096, [2000, 2000])
 
 # ==============Finds all fits files==============
+###################
+year_str = "2021"
+month_str = "01"
+day_str = "10"
+hour_str = "00"
+min_str = "00"
+
+###################
+
+
 # data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
-data_dir = os.getcwd() + '\\data\\thedata'
+data_dir = os.getcwd() + '\\data\\' + year_str + '\\' + month_str
+# data_dir = os.getcwd() + '\\data\\thedata'
 # os.chdir(data_dir)  # data_dir为数据所在的目录
 
-# 提取文件名
-f = os.listdir(data_dir)
-f171 = []
-f193 = []
-f211 = []
-fhmi = []
+##########################
+#  #如何自动识别和匹配文件？
+# # 提取文件名
+# f = os.listdir(data_dir)
+# f171 = []
+# f193 = []
+# f211 = []
+# fhmi = []
+#
+# for i in range(0, np.size(f)):
+#     if "171" in f[i]: f171 = data_dir + '//' + f[i]
+#     if "193" in f[i]: f193 = data_dir + '//' + f[i]
+#     if "211" in f[i]: f211 = data_dir + '//' + f[i]
+#     if "magneto" in f[i]: fhmi = data_dir + '//' + f[i]
+#
+# if f171 == [] or f193 == [] or f211 == [] or fhmi == []:
+#     print("Not all files are present.")
+#
+# # fil = []
+# # fil.append(f171)
+# # fil.append(f193)
+# # fil.append(f211)
 
-for i in range(0, np.size(f)):
-    if "171" in f[i]: f171 = data_dir + '//' + f[i]
-    if "193" in f[i]: f193 = data_dir + '//' + f[i]
-    if "211" in f[i]: f211 = data_dir + '//' + f[i]
-    if "magneto" in f[i]: fhmi = data_dir + '//' + f[i]
-
-if f171 == [] or f193 == [] or f211 == [] or fhmi == []:
-    print("Not all files are present.")
-
-# fil = []
-# fil.append(f171)
-# fil.append(f193)
-# fil.append(f211)
-
+f171 = data_dir+'//'+'AIA'+year_str+month_str+day_str+'_'+hour_str+min_str+'_0171.fits'
+f193 = data_dir+'//'+'AIA'+year_str+month_str+day_str+'_'+hour_str+min_str+'_0193.fits'
+f211 = data_dir+'//'+'AIA'+year_str+month_str+day_str+'_'+hour_str+min_str+'_0211.fits'
+fhmi = data_dir+'//'+'hmi.M_720s.'+year_str+month_str+day_str+'_'+hour_str+min_str+'00_TAI.fits'
+#####################################
 
 # =====Reads in data=====
 # read_sdo,fhmi,hin,hd, /use_shared_lib
@@ -90,6 +108,8 @@ for i in range(3): data[i] = cv2.resize(data[i], (4096, 4096))
 
 s = data[0].shape  # (4096,4096)
 # 暂时不管了，有点奇怪
+outdata = data # 最后用于输出的data
+outhd = cv2.resize(hd, (4096, 4096))
 
 # =======setting up arrays to be used============
 ident = 1
@@ -178,9 +198,9 @@ for i in range(np.size(w[0])):
 
 # ============make a multi-wavelength image for contours==================
 truecolorimage=np.zeros((s[0],s[1],3))
-truecolorimage[:,:,2]= main_utils.bytscl(np.log10(map_il[0].data), Max=3.9, Min=1.2)
-truecolorimage[:,:,1]= main_utils.bytscl(np.log10(map_il[1].data), Max=3.0, Min=1.4)
-truecolorimage[:,:,0]= main_utils.bytscl(np.log10(map_il[2].data), Max=2.7, Min=0.8)
+truecolorimage[:,:,2]= main_utils.bytscl(np.log10(outdata[0]), Max=3.9, Min=1.2)
+truecolorimage[:,:,1]= main_utils.bytscl(np.log10(outdata[1]), Max=3.0, Min=1.4)
+truecolorimage[:,:,0]= main_utils.bytscl(np.log10(outdata[2]), Max=2.7, Min=0.8)
 #	注意这里取了对数
 
 t0=truecolorimage[:,:,0]
@@ -248,7 +268,7 @@ for contour in contours:
         # ====create an array for magnetic polarity
         binsize = 1.
 
-        hd_contour = [hd[x] for x in inside]
+        hd_contour = [outhd[x] for x in inside]
         binnum = int((np.nanmax(hd_contour)-np.nanmin(hd_contour))//binsize + 1)
         npix,bins = np.histogram(hd_contour,bins=binnum,range=(np.nanmin(hd_contour),np.nanmax(hd_contour)))
         npix[npix==0] = 1
@@ -311,7 +331,10 @@ for contour in contours:
 
 
 # print(CHs)
-jsonfile = os.getcwd() + '\\output\\' + 'CH_info_2013_03_27.json'
+jsonfile = os.getcwd()+\
+           '\\output\\'+\
+           year_str+'\\'+\
+           'CH_info_'+year_str+'_'+month_str+'_'+day_str+'.json'
 with open(jsonfile,'w') as f:
     for CH_info in CHs:
         f.write(CH_info)
@@ -330,7 +353,10 @@ for i in range(len(Cs)):
     cv2.putText(tci,'CH'+str(id),(x,y),cv2.FONT_HERSHEY_SIMPLEX,3,(100,100,255),8)
 time_obs = map_il[0].meta['date-obs'][:-3]
 cv2.putText(tci,str(time_obs)+' CHIMERA',(200,200),cv2.FONT_HERSHEY_SIMPLEX,2,(100,100,255),2)
-cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_27.png',tci)
+cv2.imwrite(os.getcwd() +
+            '\\output\\'+
+            year_str+'\\' +
+            'CH_masked_'+year_str+'_'+month_str+'_'+day_str+'.png',tci)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
@@ -339,4 +365,5 @@ cv2.imwrite(os.getcwd() + '\\output\\' + 'CH_masked_2013_03_27.png',tci)
 #     plt.imshow(mas*msk*mak)
 #     plt.show()
 
-matchi,ismatch = tracking.trackCH(contours_large,contours_large[2],s)
+# matchi,ismatch = tracking.trackCH(contours_large,contours_large[2],s)   #match的编号是从0开始的，跟图上标记的不同
+print("done")
