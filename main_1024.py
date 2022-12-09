@@ -18,7 +18,7 @@ garr = main_utils.psf_gaussian(1024, [500, 500])
 ###################
 year_str = "2021"
 month_str = "01"
-day_str = "02"
+day_str = "10"
 hour_str = "00"
 min_str = "00"
 
