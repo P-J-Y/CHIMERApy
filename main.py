@@ -149,11 +149,12 @@ center = [int(s[0] / 2.), int(s[1] / 2.)]
 # formtab[1]='num        "          "         H°          "          "          "          "          "          "          "          "         H°          °       Mm^2          %          G          G          G          G          G          G          G         Mx         Mx         Mx'
 
 # =====Sort data by wavelength=====
-sortidx = tuple(sorted(range(len(ind)), key=lambda x: ind[x]['wavelnth']))
-ind.sort(key=lambda x: x['wavelnth'])
-data = np.array(data)[sortidx, :, :]
+# sortidx = tuple(sorted(range(len(ind)), key=lambda x: ind[x]['wavelnth']))
+# ind.sort(key=lambda x: x['wavelnth'])
+# data = np.array(data)[sortidx, :, :]
 
 # =====Normalises data with respect to exposure time=====
+data = np.array(data)
 for i in range(3):
     data[i, :, :] = data[i, :, :] / ind[i]['exptime']
 
@@ -198,9 +199,9 @@ for i in range(np.size(w[0])):
 
 # ============make a multi-wavelength image for contours==================
 truecolorimage=np.zeros((s[0],s[1],3))
-truecolorimage[:,:,2]= main_utils.bytscl(np.log10(outdata[0]), Max=3.9, Min=1.2)
-truecolorimage[:,:,1]= main_utils.bytscl(np.log10(outdata[1]), Max=3.0, Min=1.4)
-truecolorimage[:,:,0]= main_utils.bytscl(np.log10(outdata[2]), Max=2.7, Min=0.8)
+truecolorimage[:,:,2]= main_utils.bytscl(np.log10(dat0), Max=3.9, Min=1.2)
+truecolorimage[:,:,1]= main_utils.bytscl(np.log10(dat1), Max=3.0, Min=1.4)
+truecolorimage[:,:,0]= main_utils.bytscl(np.log10(dat2), Max=2.7, Min=0.8)
 #	注意这里取了对数
 
 t0=truecolorimage[:,:,0]
@@ -350,12 +351,14 @@ cv2.namedWindow('mask_rgb',0)#b,g,r
 cv2.drawContours(tci,contours_large,-1,(125,255,255),5)
 cv2.imshow('mask_rgb',tci)
 ###################改一下编号######################
+
+tci = cv2.flip(tci,0)
+time_obs = map_il[0].meta['date-obs'][:-3]
+cv2.putText(tci,str(time_obs)+' CHIMERA',(200,200),cv2.FONT_HERSHEY_SIMPLEX,2,(100,100,255),2)
 for i in range(len(Cs)):
     (x,y) = Cs[i]
     id = i+1
-    cv2.putText(tci,'CH'+str(id),(x,y),cv2.FONT_HERSHEY_SIMPLEX,3,(100,100,255),8)
-time_obs = map_il[0].meta['date-obs'][:-3]
-cv2.putText(tci,str(time_obs)+' CHIMERA',(200,200),cv2.FONT_HERSHEY_SIMPLEX,2,(100,100,255),2)
+    cv2.putText(tci,'CH'+str(id),(x,s[1]-y),cv2.FONT_HERSHEY_SIMPLEX,3,(100,100,255),8)
 cv2.imwrite(os.getcwd() +
             '\\output\\'+
             year_str+'\\' +
