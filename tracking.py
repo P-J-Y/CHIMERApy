@@ -22,7 +22,7 @@ def trackCH(lastContours,contour,s):
         coordinate = np.concatenate([a,b],axis=1).tolist()
         insidei = [tuple(x) for x in coordinate]
         overlap = [k for k in insidei[::20] if k in inside] # 比较两个CH是否有重叠
-        if 20*len(overlap)/len(insidei) > 0.8:
+        if 20*len(overlap)/len(insidei) > 0.5:
             match = True
             return i,match
     return -1,match

@@ -24,6 +24,20 @@ min_str = "00"
 
 ###################
 
+## 读取上一个时刻的识别结果
+f = os.listdir(os.getcwd())
+if 'last_info.npz' in f:
+    last_info = np.load('last_info.npz', allow_pickle=True)
+    last_contours = last_info['last_contours']
+    last_ids = last_info['last_ids']
+    id = int(last_info['id'])
+else:
+    last_contours = []
+    last_ids = []
+    id = 1
+
+
+
 
 # data_dir = "/Users/gyh/Desktop/research/CH_detect/py/data1"
 data_dir = os.getcwd() + '\\data\\' + year_str + '\\' + month_str
@@ -237,8 +251,9 @@ Cs = [] # 每个较大contour的中心坐标
 # areas = []
 # mags = [] # 平均视向磁场
 # =====cycles through contours=========
-id = 1
+# id = 1
 CHs = []
+CH_ids = []
 for contour in contours:
     # =====only takes values of minimum surface length and calculates area======
     # =====finds centroid=======
@@ -304,14 +319,24 @@ for contour in contours:
         # outline = np.array2string(contour2arc)
         # outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
         time_obs = map_il[0].meta['date-obs'][:-3]
-        CH_info = json.dumps({'id': id,
+
+        #### 这部分是追踪，把这个contour和last contours进行匹配，看看谁比较接近
+        matchi, ismatch = tracking.trackCH(last_contours, contour, s)
+        # 上面输出的matchi表示和last_contours中第几个匹配，编号从0开始
+        if ismatch:
+            theid = int(last_ids[matchi])
+        else:
+            theid = id
+            id += 1
+
+        CH_info = json.dumps({'id': theid,
                               'time': time_obs,
                               'centroid(arcsec)': CH_center,
                               'area(arcsec^2)': str('%.4g' % area),
                               'outlines(arcsec)': outline,
                               'average B_los(G)': np.nanmean(hd_contour),},
                             sort_keys=False, indent=4, separators=(',', ': '))
-        id += 1
+        CH_ids.append(theid) # 告诉下一时刻，本时刻识别出的id都是多少
         CHs.append(CH_info)
 
 
@@ -336,6 +361,22 @@ with open(jsonfile,'w') as f:
     for CH_info in CHs:
         f.write(CH_info)
         f.write('\n')
+CH_log_info = json.dumps({'id': id,
+                          'time': map_il[0].meta['date-obs'][:-3],
+                          'CH_ids': CH_ids},
+                            sort_keys=False, indent=4, separators=(',', ': '))
+# jsonfile = os.getcwd()+\
+#            '\\output\\'+\
+#            year_str+'\\'+\
+#            'CH_log_'+year_str+'_'+month_str+'_'+day_str+'.json'
+jsonfile = os.getcwd()+'\\last_log.json'
+with open(jsonfile,'w') as f:
+    f.write(CH_log_info)
+
+np.savez('last_info',last_contours=contours_large,last_ids=CH_ids,id=id)
+
+
+
 
 
 #====plot EUV image with CHs marked=========
@@ -350,8 +391,7 @@ time_obs = map_il[0].meta['date-obs'][:-3]
 cv2.putText(tci,str(time_obs)+' CHIMERA',(50,50),cv2.FONT_HERSHEY_SIMPLEX,0.8,(100,100,255),1)
 for i in range(len(Cs)):
     (x,y) = Cs[i]
-    id = i+1
-    cv2.putText(tci,'CH'+str(id),(x,s[1]-y),cv2.FONT_HERSHEY_SIMPLEX,0.8,(100,100,255),1)
+    cv2.putText(tci,'CH'+str(CH_ids[i]),(x,s[1]-y),cv2.FONT_HERSHEY_SIMPLEX,0.8,(100,100,255),1)
 cv2.imwrite(os.getcwd() +
             '\\output\\'+
             year_str+'\\' +
