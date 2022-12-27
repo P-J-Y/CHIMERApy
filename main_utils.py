@@ -1,6 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+from sunpy.physics.differential_rotation import solar_rotate_coordinate
+from sunpy.time import parse_time
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+from sunpy.coordinates import Helioprojective
 
 def bytscl(data, top=255, bottom=0, nan_val=0, Max=None, Min=None):
     '''
@@ -101,6 +105,18 @@ def poly_area(x, y):
     xy = np.column_stack((x, y))
     area = 0.5 * np.abs(np.dot(xy[:-1], xy[1:]) - np.dot(xy[1:], xy[:-1]))
     return area
+
+def rot_contour(contour2arc,time_obs,time_last):
+    st = parse_time(time_obs)
+    et = parse_time(time_last)
+    contour2arc_roted = np.zeros(contour2arc.shape)
+    c = SkyCoord(contour2arc[:,0] * u.arcsec, contour2arc[:,1] * u.arcsec,
+                 obstime=st, observer="earth", frame=Helioprojective)
+    c_roted = solar_rotate_coordinate(c, time=et)
+    contour2arc_roted[:, 0] = c_roted.Tx.arcsec
+    contour2arc_roted[:, 1] = c_roted.Ty.arcsec
+    return contour2arc_roted
+
 
 if __name__ == "__main__":
     psf = psf_gaussian(4096, [2000, 2000])

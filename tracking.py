@@ -21,8 +21,8 @@ def trackCH(lastContours,contour,s):
         b = np.where(p==255)[1].reshape(-1,1)
         coordinate = np.concatenate([a,b],axis=1).tolist()
         insidei = [tuple(x) for x in coordinate]
-        overlap = [k for k in insidei[::20] if k in inside] # 比较两个CH是否有重叠
-        if 20*len(overlap)/len(insidei) > 0.5:
+        overlap = [k for k in insidei[::20] if k in inside] # 比较两个CH是否有重叠,last占目前的比例
+        if (20*len(overlap)/len(insidei) > 0.6) | (20*len(overlap)/len(inside) > 0.6):
             match = True
             return i,match
     return -1,match

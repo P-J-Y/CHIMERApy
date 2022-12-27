@@ -11,6 +11,7 @@ import main_utils
 import json
 import tracking
 
+
 #
 garr = main_utils.psf_gaussian(1024, [500, 500])
 
@@ -31,10 +32,12 @@ if 'last_info.npz' in f:
     last_contours = last_info['last_contours']
     last_ids = last_info['last_ids']
     id = int(last_info['id'])
+    time_last = last_info['time_last']
 else:
     last_contours = []
     last_ids = []
     id = 1
+    time_last = ''
 
 
 
@@ -248,6 +251,9 @@ contours,hierarchy = cv2.findContours(Def_grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APP
 area_thres = 1000 / (dattoarc**2) # 选出比这个大的面积，像素^2
 contours_large = [] # 比较大的contours
 Cs = [] # 每个较大contour的中心坐标
+# # for test
+# contour_roteds = []
+
 # areas = []
 # mags = [] # 平均视向磁场
 # =====cycles through contours=========
@@ -320,11 +326,26 @@ for contour in contours:
         # outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
         time_obs = map_il[0].meta['date-obs'][:-3]
 
+
+
+        if time_last:
+            contour2arc_roted = main_utils.rot_contour(contour2arc,time_obs,time_last)
+            contour_roted = (contour2arc_roted / dattoarc) + center[0]
+            contour_roted = contour_roted.reshape(-1,1,2).astype(np.int32)
+        else:
+            contour_roted = contour
+            print("No last info!")
+        # # for test
+        # contour_roteds.append(contour_roted)
+
         #### 这部分是追踪，把这个contour和last contours进行匹配，看看谁比较接近
-        matchi, ismatch = tracking.trackCH(last_contours, contour, s)
+        matchi, ismatch = tracking.trackCH(last_contours, contour_roted, s)
         # 上面输出的matchi表示和last_contours中第几个匹配，编号从0开始
         if ismatch:
             theid = int(last_ids[matchi])
+            if theid in CH_ids:
+                theid = id
+                id += 1
         else:
             theid = id
             id += 1
@@ -373,7 +394,7 @@ jsonfile = os.getcwd()+'\\last_log.json'
 with open(jsonfile,'w') as f:
     f.write(CH_log_info)
 
-np.savez('last_info',last_contours=contours_large,last_ids=CH_ids,id=id)
+np.savez('last_info',last_contours=contours_large,last_ids=CH_ids,id=id,time_last=map_il[0].meta['date-obs'][:-3])
 
 
 
