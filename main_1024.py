@@ -321,7 +321,9 @@ for contour in contours:
         np.set_printoptions(threshold=np.inf)
         contour2arc = contour2arc.swapaxes(1,2)
         contour2arc = np.squeeze(contour2arc,2)
-        outline = contour2arc.tolist()
+        # contour2arc = contour2arc[:, [1,0]]
+        contour2arcOut = contour2arc[:, [1,0]]
+        outline = contour2arcOut.tolist()
         # outline = np.array2string(contour2arc)
         # outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
         time_obs = map_il[0].meta['date-obs'][:-3]
@@ -350,13 +352,19 @@ for contour in contours:
             theid = id
             id += 1
 
-        CH_info = json.dumps({'id': theid,
-                              'time': time_obs,
-                              'centroid(arcsec)': CH_center,
-                              'area(arcsec^2)': str('%.4g' % area),
-                              'outlines(arcsec)': outline,
-                              'average B_los(G)': np.nanmean(hd_contour),},
-                            sort_keys=False, indent=4, separators=(',', ': '))
+        # CH_info = json.dumps({'id': theid,
+        #                       'time': time_obs,
+        #                       'centroid(arcsec)': CH_center,
+        #                       'area(arcsec^2)': str('%.4g' % area),
+        #                       'outlines(arcsec)': outline,
+        #                       'average B_los(G)': np.nanmean(hd_contour),},
+        #                     sort_keys=False, indent=4, separators=(',', ': '))
+        CH_info = {'id': theid,
+                   'time': time_obs,
+                   'centroid(arcsec)': CH_center,
+                   'area(arcsec^2)': str('%.4g' % area),
+                   'outlines(arcsec)': outline,
+                   'average B_los(G)': np.nanmean(hd_contour)}
         CH_ids.append(theid) # 告诉下一时刻，本时刻识别出的id都是多少
         CHs.append(CH_info)
 
@@ -378,10 +386,16 @@ jsonfile = os.getcwd()+\
            '\\output\\'+\
            year_str+'\\'+\
            'CH_info_'+year_str+'_'+month_str+'_'+day_str+'.json'
+jsonCHs = json.dumps(CHs, ensure_ascii=False, indent=2)
+# with open(jsonfile,'w') as f:
+#     f.write('[\n  ')
+#     for CH_info in CHs:
+#         f.write(CH_info)
+#         f.write(',\n')
+#     f.write(']')
 with open(jsonfile,'w') as f:
-    for CH_info in CHs:
-        f.write(CH_info)
-        f.write('\n')
+    f.write(jsonCHs)
+
 CH_log_info = json.dumps({'id': id,
                           'time': map_il[0].meta['date-obs'][:-3],
                           'CH_ids': CH_ids},
