@@ -322,7 +322,7 @@ for contour in contours:
         contour2arc = contour2arc.swapaxes(1,2)
         contour2arc = np.squeeze(contour2arc,2)
         # contour2arc = contour2arc[:, [1,0]]
-        contour2arcOut = contour2arc[:, [1,0]]
+        contour2arcOut = contour2arc[:, [0,1]] # 保持（x,y）的顺序
         outline = contour2arcOut.tolist()
         # outline = np.array2string(contour2arc)
         # outline = outline.replace('[[', '[').replace(']]', ']').replace('\n', '')
